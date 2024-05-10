@@ -12,6 +12,10 @@ use std::env;
 
 mod logic;
 mod neural_network;
+mod utils;
+mod constants;
+
+//
 
 // API and Response Objects
 // See https://docs.battlesnake.com/api
@@ -44,7 +48,7 @@ pub struct Battlesnake {
     shout: Option<String>,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone, Copy)]
 pub struct Coord {
     x: i32,
     y: i32,

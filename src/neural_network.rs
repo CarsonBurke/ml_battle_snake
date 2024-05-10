@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fs;
 use std::sync::Mutex;
 
 use rand::Rng;
@@ -18,10 +19,6 @@ impl NeuralNetworkManager {
         return (&self.id_index).to_string();
     }
 }
-
-pub static NEURAL_NETWORK_MANAGER: Mutex<NeuralNetworkManager> = Mutex::new(NeuralNetworkManager {
-    id_index: 1,
-})/* .unwrap() */;
 
 const BIAS: f32 = 1.;
 const LEARNING_RATE: f32 = 1.;
@@ -107,14 +104,10 @@ impl NeuralNetwork {
     //          */
     //     }
 
-    pub fn new() -> Self {
-        /*
-               self.id = NEURAL_NETWORK_MANAGER.lock().unwrap().new_id();
+    pub fn new(neural_network_manager: &mut NeuralNetworkManager) -> Self {
 
-               NEURAL_NETWORK_MANAGER.lock().unwrap().networks.insert(self.id.parse::<i32>().unwrap(), self);
-        */
         return NeuralNetwork {
-            id: NEURAL_NETWORK_MANAGER.lock().unwrap().new_id(),
+            id: neural_network_manager.new_id(),
             input_weight_layers: vec![],
             weights_by_id: HashMap::new(),
             weight_layers: vec![],
@@ -267,6 +260,10 @@ impl NeuralNetwork {
         return 0.;
     }
 
+    pub fn get_outputs(&self) -> &Vec<f32> {
+        &self.activation_layers[self.activation_layers.len() - 1]
+    }
+
     pub fn back_propagate(&mut self, scored_outputs: bool) {}
 
     /**
@@ -343,13 +340,25 @@ impl NeuralNetwork {
         println!("{:?}", self.weight_layers);
     }
 
+    pub fn write_to_file(&self) {
+        println!("Write to file");
+
+        self.write_weights();
+    }
+
+    pub fn write_weights(&self) {
+        fs::write("weights_by_id.txt", format!("{:?}", self.weights_by_id)).expect("Unable to write weights by id");
+
+        fs::write("weight_layers.txt", format!("{:?}", self.weight_layers)).expect("Unable to write weight layers");
+    }
+
     pub fn init_visuals(&mut self) {}
 
     pub fn update_visuals(&mut self) {}
 
-    pub unsafe fn clone(&self) -> NeuralNetwork {
+    pub unsafe fn clone(&self, neural_network_manager: &mut NeuralNetworkManager) -> NeuralNetwork {
         let new_neural_network = NeuralNetwork {
-            id: NEURAL_NETWORK_MANAGER.lock().unwrap().new_id(),
+            id: neural_network_manager.new_id(),
             input_weight_layers: self.input_weight_layers.clone(),
             weights_by_id: self.weights_by_id.clone(),
             weight_layers: self.weight_layers.clone(),

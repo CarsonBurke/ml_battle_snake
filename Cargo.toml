@@ -24,3 +24,4 @@ rand = "0.8.4"
 [features]
 default = ["benchmark"]
 benchmark = []
+debug = []

@@ -68,7 +68,7 @@ pub struct CoordInfo {
 // move is called on every turn and returns your next move
 // Valid moves are "up", "down", "left", or "right"
 // See https://docs.battlesnake.com/api/example-move for available data
-pub fn get_move(_game: &Game, turn: &i32, board: &Board, me: &Battlesnake) -> Value {
+pub fn get_move<'a>(_game: &Game, turn: &i32, board: &Board, me: &Battlesnake) -> &'a str {
     #[cfg(feature = "benchmark")]
     let start = SystemTime::now();
 
@@ -196,7 +196,7 @@ pub fn get_move(_game: &Game, turn: &i32, board: &Board, me: &Battlesnake) -> Va
     }
 
     let Some(chosen_move) = chosen_move else {
-        return json!({ "move": "up" });
+        return "up"
     };
 
     println!("MOVE {} with score {}", chosen_move, best_score);
@@ -260,5 +260,5 @@ pub fn get_move(_game: &Game, turn: &i32, board: &Board, me: &Battlesnake) -> Va
     #[cfg(feature = "benchmark")]
     info!("took {}ms", duration);
 
-    return json!({ "move": chosen_move });
+    return chosen_move;
 }

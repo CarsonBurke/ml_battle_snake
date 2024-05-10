@@ -1,6 +1,6 @@
 pub mod graphics {
     pub const EMPTY: &str = "•";
-    pub const FOOD: &str = "🍎";
+    pub const FOOD: &str = "x";
     pub const HAZARD: &str = "⚠️";
     pub const HEAD: &str = "0";
     pub const BODY_UP: &str = "^";

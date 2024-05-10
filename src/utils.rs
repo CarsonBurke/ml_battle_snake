@@ -1,7 +1,7 @@
 use crate::Coord;
 
-pub fn pack_xy(x: i32, y: i32, width: i32) -> i32 {
-    x * width + y
+pub fn pack_xy(x: i32, y: u32, width: i32) -> i32 {
+    x * width + y as i32
 }
 
 pub fn pack_coord(coord: Coord, width: i32) -> i32 {
@@ -18,4 +18,8 @@ pub fn bool_as_f32(boolean: bool) -> f32 {
     };
 
     0.0
+}
+
+pub fn is_out_of_bounds(x: i32, y: i32, width: i32, height: u32) -> bool {
+    x < 0 || x >= width || y < 0 || y >= height as i32
 }

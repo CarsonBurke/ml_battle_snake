@@ -1,32 +1,38 @@
+use crate::simulation::game::GameStepOutcome;
+
 use super::game::GameWrapper;
 
 pub struct Simulation {
-    pub game_wrappers: Vec<GameWrapper>,
+
 }
 
 impl Simulation {
     pub fn new() -> Self {
-
-     Self {
-        game_wrappers: Vec::new(),
-     }   
+        Self {
+            
+        }
     }
 
-    pub async fn run_games(&mut self, games_count: u32, width: i32, height: u32, snakes_count: u32) {
+    pub async fn run_games(
+        &mut self,
+        games_count: u32,
+        width: i32,
+        height: u32,
+        snakes_count: u32,
+    ) {
 
         for i in 0..games_count {
-            self.game_wrappers.push(
-                GameWrapper::new(width, height, snakes_count)
-            );   
-        }
+            println!("Starting game {}/{}", i + 1, games_count);
 
-        for game in &mut self.game_wrappers {
-            game.play_for_outcome();
+            let mut game_wrapper = GameWrapper::new(width, height, snakes_count);
+
+            let game_outcome = game_wrapper.play_for_outcome().await;
+
+            println!("{:?}", game_outcome);
+
+            assert_ne!(game_outcome, GameStepOutcome::None);
         }
     }
 
-    pub async fn run_tournament(&self, games_count: u32) {
-
-
-    }
+    pub async fn run_tournament(&self, games_count: u32) {}
 }

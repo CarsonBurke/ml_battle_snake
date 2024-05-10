@@ -14,7 +14,7 @@ mod logic;
 mod neural_network;
 mod utils;
 mod constants;
-mod simulation;
+pub mod simulation;
 
 //
 
@@ -49,7 +49,7 @@ pub struct Battlesnake {
     shout: Option<String>,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, Copy)]
+#[derive(Deserialize, Serialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Coord {
     x: i32,
     y: i32,

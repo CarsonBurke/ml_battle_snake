@@ -1,11 +1,14 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    usize,
+};
 
 use colored::Colorize;
 use rand::{random, Rng};
 
 use crate::{
     ml_snake::logic::get_move,
-    utils::{get_direction, is_out_of_bounds, pack_coord, pack_xy},
+    utils::{get_direction, is_out_of_bounds, pack_coord, pack_xy, unpack_coord},
     Battlesnake, Board, Coord, Game, GameState,
 };
 
@@ -24,6 +27,7 @@ pub enum GameStepOutcome {
     None,
 }
 
+#[derive(Debug)]
 pub enum CoordType {
     Head,
     BodyUp,
@@ -59,6 +63,9 @@ impl GameWrapper {
         let mut food = Vec::new();
 
         food.push(Coord { x: 0, y: 0 });
+        food.push(Coord { x: 3, y: 3 });
+        food.push(Coord { x: 7, y: 4 });
+        food.push(Coord { x: 9, y: 9 });
 
         Self {
             turn: 0,
@@ -78,6 +85,10 @@ impl GameWrapper {
     }
 
     pub async fn play_for_outcome(&mut self) -> GameStepOutcome {
+        #[cfg(feature = "visualize_game")]
+        self.visualize();
+        println!("Snakes: {:?}", self.board.snakes);
+
         for _turn in self.turn.. {
             let step_outcome = self.turn_step();
 
@@ -91,12 +102,14 @@ impl GameWrapper {
     }
 
     pub fn turn_step(&mut self) -> GameStepOutcome {
+        self.age_snakes();
+        self.feed_snakes();
         self.propagate_snakes();
         self.kill_snakes();
-        self.age_snakes();
 
         #[cfg(feature = "visualize_game")]
         self.visualize();
+        println!("Snakes: {:?}", self.board.snakes);
 
         self.turn += 1;
 
@@ -107,10 +120,31 @@ impl GameWrapper {
         }
     }
 
+    fn feed_snakes(&mut self) {
+        let mut snake_ids_by_head: HashMap<i32, String> = HashMap::new();
+
+        for snake in &self.board.snakes {
+            let packed_coord = pack_coord(&snake.head, self.board.width);
+            snake_ids_by_head.insert(packed_coord, snake.id.clone());
+        }
+
+        for food in &self.board.food {
+            let packed_coord = pack_coord(food, self.board.width);
+            let Some(snake_id) = snake_ids_by_head.get(&packed_coord) else {
+                continue;
+            };
+
+            for snake in &mut self.board.snakes {
+                if &snake.id != snake_id {
+                    continue;
+                }
+
+                snake.length += 1;
+            }
+        }
+    }
+
     fn propagate_snakes(&mut self) {
-
-        println!("Snakes: {:?}", self.board.snakes);
-
         let mut moves = Vec::new();
         let mut index = 0;
 
@@ -137,12 +171,22 @@ impl GameWrapper {
 
             assert_ne!(offset, Coord { x: 0, y: 0 }, "invalid move");
 
+            let mut previous = snake.head.clone();
+
             snake.head.x += offset.x;
             snake.head.y += offset.y;
 
             for body_part in &mut snake.body {
-                body_part.x += offset.x;
-                body_part.y += offset.y;
+                let new_previous = body_part.clone();
+
+                body_part.x = previous.x;
+                body_part.y = previous.y;
+
+                previous = new_previous;
+            }
+
+            if (snake.body.len() as i32) < snake.length {
+                snake.body.push(previous.clone());
             }
         }
     }
@@ -168,20 +212,19 @@ impl GameWrapper {
         // Check for head-on collisions and kill snakes when necessary
 
         let mut snakes_to_kill = HashSet::new();
-        let mut snake_ids_by_coord: HashMap<i32, String> = HashMap::new();
+        let mut snake_ids_by_head: HashMap<i32, String> = HashMap::new();
 
         for snake in &self.board.snakes {
+            let packed_coord = pack_coord(&snake.head, self.board.width);
 
-            let packed_coord = pack_coord(snake.head, self.board.width);
-
-            if let Some(other_snake_id) = snake_ids_by_coord.get(&packed_coord) {
+            if let Some(other_snake_id) = snake_ids_by_head.get(&packed_coord) {
                 snakes_to_kill.insert(snake.id.clone());
                 snakes_to_kill.insert(other_snake_id.to_string());
 
                 continue;
             }
 
-            snake_ids_by_coord.insert(packed_coord, snake.id.clone());
+            snake_ids_by_head.insert(packed_coord, snake.id.clone());
         }
 
         // let mut snake_head_coords = HashSet::new(); // HashSet::from_iter(self.board.snakes.iter().map(|snake| snake.head));
@@ -220,6 +263,8 @@ impl GameWrapper {
         for snake in &mut self.board.snakes {
             snake.health -= 1;
         }
+
+        self.board.snakes.retain(|snake| snake.health > 0);
     }
 
     fn visualize(&self) {
@@ -232,46 +277,34 @@ impl GameWrapper {
         }
 
         for food in &self.board.food {
-            coord_types.insert(
-                pack_coord(*food, self.board.width) as usize,
-                CoordType::Food,
-            );
+            coord_types[pack_coord(food, self.board.width) as usize] = CoordType::Food;
+            println!("Food {}, {}", food.x, food.y);
         }
 
         for snake in &self.board.snakes {
-            coord_types.insert(
-                pack_coord(snake.head, self.board.width) as usize,
-                CoordType::Head,
-            );
+            coord_types[pack_coord(&snake.head, self.board.width) as usize] = CoordType::Head;
 
-            let mut previous: Coord = snake.head;
+            let mut previous = snake.head;
 
             for body_part in &snake.body {
-
                 let direction = get_direction(*body_part, previous);
 
-                coord_types.insert(
-                    pack_coord(*body_part, self.board.width) as usize,
-                    match direction {
-                        "up" => CoordType::BodyUp,
-                        "down" => CoordType::BodyDown,
-                        "left" => CoordType::BodyLeft,
-                        "right" => CoordType::BodyRight,
-                        _ => {
-                            panic!("invalid direction, coordinates are possibly equal");
-                        }
-                    },
-                );
+                coord_types[pack_coord(body_part, self.board.width) as usize] = match direction {
+                    "up" => CoordType::BodyUp,
+                    "down" => CoordType::BodyDown,
+                    "left" => CoordType::BodyLeft,
+                    "right" => CoordType::BodyRight,
+                    _ => {
+                        panic!("invalid direction, coordinates are possibly equal");
+                    }
+                };
 
                 previous = *body_part;
             }
         }
 
         for hazard in &self.board.hazards {
-            coord_types.insert(
-                pack_coord(*hazard, self.board.width) as usize,
-                CoordType::Hazard,
-            );
+            coord_types[pack_coord(hazard, self.board.width) as usize] = CoordType::Hazard;
         }
 
         for y in 0..self.board.height {
@@ -280,12 +313,14 @@ impl GameWrapper {
             for x in 0..self.board.width {
                 let Some(coord_type) = coord_types.get(pack_xy(x, y, self.board.width) as usize)
                 else {
-                    continue;
+                    panic!("Out of bounds search");
                 };
 
                 let graphic = match coord_type {
                     CoordType::Empty => graphics::EMPTY.white(),
-                    CoordType::Food => graphics::FOOD.red(),
+                    CoordType::Food => {
+                        graphics::FOOD.red()
+                    }
                     CoordType::Hazard => graphics::HAZARD.white(),
                     CoordType::BodyUp => graphics::BODY_UP.white(),
                     CoordType::BodyDown => graphics::BODY_DOWN.white(),

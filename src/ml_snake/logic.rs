@@ -98,7 +98,7 @@ pub fn get_move<'a>(_game: &Game, turn: &i32, board: &Board, me: &Battlesnake) -
         game_info.opponent_healths.push(any_snake.health);
         game_info.opponent_lengths.push(any_snake.length);
 
-        if let Some(coord_info) = grid.get_mut(pack_coord(any_snake.head, board.width) as usize) {
+        if let Some(coord_info) = grid.get_mut(pack_coord(&any_snake.head, board.width) as usize) {
             if any_snake.id == me.id {
                 coord_info.my_head = true;
             } else {
@@ -107,7 +107,7 @@ pub fn get_move<'a>(_game: &Game, turn: &i32, board: &Board, me: &Battlesnake) -
         };
 
         for body_part in &any_snake.body {
-            if let Some(coord_info) = grid.get_mut(pack_coord(*body_part, board.width) as usize) {
+            if let Some(coord_info) = grid.get_mut(pack_coord(body_part, board.width) as usize) {
                 if any_snake.id == me.id {
                     coord_info.my_body = true;
                 } else {
@@ -118,7 +118,7 @@ pub fn get_move<'a>(_game: &Game, turn: &i32, board: &Board, me: &Battlesnake) -
     }
 
     for food_coord in &board.food {
-        if let Some(coord_info) = grid.get_mut(pack_coord(*food_coord, board.width) as usize) {
+        if let Some(coord_info) = grid.get_mut(pack_coord(&food_coord, board.width) as usize) {
             coord_info.food = true;
         };
     }

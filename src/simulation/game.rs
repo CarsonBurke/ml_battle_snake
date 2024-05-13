@@ -7,8 +7,9 @@ use colored::Colorize;
 use rand::{random, Rng};
 
 use crate::{
-    ml_snake::logic::get_move,
-    utils::{get_direction, is_out_of_bounds, pack_coord, pack_xy, unpack_coord},
+    ml_snake::logic::{choose_move, get_move},
+    neural_network::NeuralNetwork,
+    utils::{get_direction, is_out_of_bounds, pack_coord, pack_xy, random_coord, unpack_coord},
     Battlesnake, Board, Coord, Game, GameState,
 };
 
@@ -62,10 +63,9 @@ impl GameWrapper {
 
         let mut food = Vec::new();
 
-        food.push(Coord { x: 0, y: 0 });
-        food.push(Coord { x: 3, y: 3 });
-        food.push(Coord { x: 7, y: 4 });
-        food.push(Coord { x: 9, y: 9 });
+        for i in 0..=snakes_count {
+            food.push(random_coord(width, height));
+        }
 
         Self {
             turn: 0,
@@ -84,13 +84,14 @@ impl GameWrapper {
         }
     }
 
-    pub async fn play_for_outcome(&mut self) -> GameStepOutcome {
+    pub async fn play_for_outcome(&mut self, networks: &mut Vec<NeuralNetwork>) -> GameStepOutcome {
         #[cfg(feature = "visualize_game")]
         self.visualize();
+        #[cfg(debug_game)]
         println!("Snakes: {:?}", self.board.snakes);
 
         for _turn in self.turn.. {
-            let step_outcome = self.turn_step();
+            let step_outcome = self.turn_step(networks);
 
             match step_outcome {
                 GameStepOutcome::None => continue,
@@ -101,14 +102,18 @@ impl GameWrapper {
         GameStepOutcome::None
     }
 
-    pub fn turn_step(&mut self) -> GameStepOutcome {
+    pub fn turn_step(&mut self, networks: &mut Vec<NeuralNetwork>) -> GameStepOutcome {
+        #[cfg(feature = "turn_logs")]
+        println!("Running turn {}:", self.turn);
+
         self.age_snakes();
         self.feed_snakes();
-        self.propagate_snakes();
+        self.propagate_snakes(networks);
         self.kill_snakes();
 
         #[cfg(feature = "visualize_game")]
         self.visualize();
+        #[cfg(debug_game)]
         println!("Snakes: {:?}", self.board.snakes);
 
         self.turn += 1;
@@ -144,13 +149,20 @@ impl GameWrapper {
         }
     }
 
-    fn propagate_snakes(&mut self) {
+    fn propagate_snakes(&mut self, networks: &mut Vec<NeuralNetwork>) {
         let mut moves = Vec::new();
         let mut index = 0;
 
         for snake in &self.board.snakes {
-            let chosen_move = get_move(&self.game, &self.turn, &self.board, &snake);
+            let Ok(id) = snake.id.parse::<usize>() else {
+                panic!("invalid snake id");
+            };
 
+            let Some(network) = &mut networks.get_mut(id) else {
+                panic!("invalid network");
+            };
+
+            let chosen_move = choose_move(&self.game, &self.turn, &self.board, &snake, network);
             moves.push((index, chosen_move));
 
             index += 1;
@@ -185,7 +197,7 @@ impl GameWrapper {
                 previous = new_previous;
             }
 
-            if (snake.body.len() as i32) < snake.length {
+            if (snake.body.len() as i32 + 1) < snake.length {
                 snake.body.push(previous.clone());
             }
         }
@@ -278,7 +290,6 @@ impl GameWrapper {
 
         for food in &self.board.food {
             coord_types[pack_coord(food, self.board.width) as usize] = CoordType::Food;
-            println!("Food {}, {}", food.x, food.y);
         }
 
         for snake in &self.board.snakes {
@@ -307,6 +318,8 @@ impl GameWrapper {
             coord_types[pack_coord(hazard, self.board.width) as usize] = CoordType::Hazard;
         }
 
+        println!("End of turn {}", self.turn);
+
         for y in 0..self.board.height {
             let mut print_line = String::new();
 
@@ -318,9 +331,7 @@ impl GameWrapper {
 
                 let graphic = match coord_type {
                     CoordType::Empty => graphics::EMPTY.white(),
-                    CoordType::Food => {
-                        graphics::FOOD.red()
-                    }
+                    CoordType::Food => graphics::FOOD.red(),
                     CoordType::Hazard => graphics::HAZARD.white(),
                     CoordType::BodyUp => graphics::BODY_UP.white(),
                     CoordType::BodyDown => graphics::BODY_DOWN.white(),

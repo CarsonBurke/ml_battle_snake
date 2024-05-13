@@ -7,12 +7,12 @@ extern crate rand;
 
 pub struct NeuralNetworkManager {
     id_index: i32,
-    /* pub networks: HashMap<i32, NeuralNetwork>, */
+    pub networks: HashMap<i32, NeuralNetwork>
 }
 
 impl NeuralNetworkManager {
     pub fn new() -> Self {
-        return Self { id_index: 0 };
+        return Self { id_index: 0, networks: HashMap::new() };
     }
     pub fn new_id(&mut self) -> String {
         self.id_index += 1;
@@ -20,25 +20,19 @@ impl NeuralNetworkManager {
     }
 }
 
-const BIAS: f32 = 1.;
-const LEARNING_RATE: f32 = 1.;
-const HIDDEN_LAYERS_COUNT: i32 = 1;
-const HIDDEN_PERCEPTRON_COUNT: i32 = 2;
+const BIAS: f32 = -0.1;
+const LEARNING_RATE: f32 = 0.1;
+const HIDDEN_LAYERS_COUNT: i32 = 3;
+const HIDDEN_PERCEPTRON_COUNT: i32 = 5;
 
 /*
 static neural_network_manager: Mutex<NeuralNetworkManager> = NeuralNetworkManager {
     id_index: 1,
-    networks: vec![],
-    hidden_layers_count: 2,
-    hidden_perceptron_count: 3,
 };
  */
 /*
 neural_network_manager: NeuralNetworkManager = NeuralNetworkManager {
     id_index: 1,
-    networks: vec![],
-    hidden_layers_count: 2,
-    hidden_perceptron_count: 3,
 };
  */
 
@@ -367,7 +361,7 @@ impl NeuralNetwork {
 
     pub fn update_visuals(&mut self) {}
 
-    pub unsafe fn clone(&self, neural_network_manager: &mut NeuralNetworkManager) -> NeuralNetwork {
+    pub fn clone(&self, neural_network_manager: &mut NeuralNetworkManager) -> NeuralNetwork {
         let new_neural_network = NeuralNetwork {
             id: neural_network_manager.new_id(),
             input_weight_layers: self.input_weight_layers.clone(),

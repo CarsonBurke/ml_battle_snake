@@ -1,16 +1,43 @@
-# Battlesnake Rust Starter Project
+# ml_battle_snake
 
-An official Battlesnake template written in Rust. Get started at [play.battlesnake.com](https://play.battlesnake.com).
+An machine learning battlesnake written in rust.
 
-![Battlesnake Logo](https://media.battlesnake.com/social/StarterSnakeGitHubRepos_Rust.png)
+## Limitations
 
-This project is a great starting point for anyone wanting to program their first Battlesnake in Rust. It can be run locally or easily deployed to a cloud provider of your choosing. See the [Battlesnake API Docs](https://docs.battlesnake.com/api) for more detail. 
+This AI is not designed and potentially incapable of running on Royale and Constrictor game modes. It is only intended to run in Standard and Duel mode, as well as whatever alterations the simulation may offer.
 
-[![Run on Replit](https://repl.it/badge/github/BattlesnakeOfficial/starter-snake-rust)](https://replit.com/@Battlesnake/starter-snake-rust)
+## Commands
 
-## Technologies Used
+### Simulation
 
-This project uses [Rust](https://www.rust-lang.org/) and [Rocket](https://rocket.rs). It also comes with an optional [Dockerfile](https://docs.docker.com/engine/reference/builder/) to help with deployment.
+```bash
+cargo run --bin simulate
+```
+
+### Online battle
+
+```bash
+cargo run --bin server
+```
+
+## Simulation
+
+I have programmed a simulation of the real game's Standard and Duel versions with inspiration from the wonderful [snork](https://github.com/wrenger/snork) codebase. It is intended to run fast to train machine learning models, while offering optional benchmarking and visuals.
+
+## Server
+
+This section assumes you are using a self-hosted solution, such as from your own computer
+
+- private IP address should go in Rocket.toml > address
+- forwarded port should go in Rocket.toml > port
+- keep_alive should probably be set to 0
+
+### Connecting to snake
+
+- Server URL should be the following:
+    - `http://[public IP]:[forwarded port]/`
+
+Example: `http://75.156.58.23:4576/`
 
 ## Run Your Battlesnake
 

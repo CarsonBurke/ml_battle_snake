@@ -17,7 +17,7 @@ use std::{collections::HashMap, time::SystemTime};
 
 use crate::{
     neural_network::{Input, NeuralNetwork, NeuralNetworkManager, Output},
-    utils::{bool_as_f32, pack_coord},
+    utils::{bool_as_f32, build_neural_network, pack_coord},
     Battlesnake, Board, Game,
 };
 
@@ -68,7 +68,17 @@ pub struct CoordInfo {
 // move is called on every turn and returns your next move
 // Valid moves are "up", "down", "left", or "right"
 // See https://docs.battlesnake.com/api/example-move for available data
-pub fn get_move<'a>(_game: &Game, turn: &i32, board: &Board, me: &Battlesnake) -> &'a str {
+pub fn get_move<'a>(game: &Game, turn: &i32, board: &Board, me: &Battlesnake) -> &'a str {
+    let mut neural_network_manager = NeuralNetworkManager::new();
+    let mut neural_network = NeuralNetwork::new(&mut neural_network_manager);
+
+    build_neural_network(&mut neural_network, board.width, board.height);
+    neural_network.mutate();
+
+    choose_move(game, turn, board, me, &mut neural_network)
+}
+
+pub fn choose_move<'a>(_game: &Game, _turn: &i32, board: &Board, me: &Battlesnake, neural_network: &mut NeuralNetwork) -> &'a str {
     #[cfg(feature = "benchmark")]
     let start = SystemTime::now();
 
@@ -125,9 +135,6 @@ pub fn get_move<'a>(_game: &Game, turn: &i32, board: &Board, me: &Battlesnake) -
 
     // neural network
 
-    let mut neural_network_manager = NeuralNetworkManager::new();
-    let mut neural_network = NeuralNetwork::new(&mut neural_network_manager);
-
     let mut inputs: Vec<Input> = vec![Input::new(
         "game".to_string(),
         vec![0., 0., 0., 0.],
@@ -170,8 +177,6 @@ pub fn get_move<'a>(_game: &Game, turn: &i32, board: &Board, me: &Battlesnake) -
         Output::new("right".to_string()),
     ];
 
-    neural_network.build(&inputs, outputs.len());
-    neural_network.mutate();
     neural_network.forward_propagate(&inputs);
     let outputs = neural_network.get_outputs();
 
@@ -199,6 +204,7 @@ pub fn get_move<'a>(_game: &Game, turn: &i32, board: &Board, me: &Battlesnake) -
         return "up"
     };
 
+    #[cfg(feature = "snake_logs")]
     println!("MOVE {} with score {}", chosen_move, best_score);
 
     //

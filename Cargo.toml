@@ -24,17 +24,22 @@ tokio = { version = "1.35", features = ["fs", "sync", "time", "macros", "rt-mult
 colored = "2.1.0"
 
 [features]
-default = ["benchmark", "visualize_game", "benchmark_game"]
+default = ["benchmark", "benchmark_game", "snake_logs", "turn_logs"]
 benchmark = []
 debug = []
 visualize_game = []
 benchmark_game = []
+write_to_file = []
+snake_logs = []
+turn_logs = []
+debug_simulation = []
 
 [[simulation]]
 name = "main"
 default = ["visualize_game", "benchmark_game"]
 visualize_game = true
 benchmark_game = true
+debug_game = true
 
 [[server]]
 name = "main"

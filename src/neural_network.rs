@@ -215,7 +215,8 @@ impl NeuralNetwork {
             while value_i < input.values.len() {
                 self.activation_layers[0][input_i] += self.relu(
                     inputs[input_i].values[value_i]
-                        * self.weights_by_id[&inputs[input_i].weight_ids[value_i]],
+                        * self.weights_by_id[&inputs[input_i].weight_ids[value_i]]
+                        + BIAS,
                 );
                 value_i += 1;
             }
@@ -243,7 +244,7 @@ impl NeuralNetwork {
                 }
 
                 self.activation_layers[layer_i][activation_i] =
-                    self.relu(self.activation_layers[layer_i][activation_i]);
+                    self.relu(self.activation_layers[layer_i][activation_i] + BIAS);
 
                 activation_i += 1;
             }

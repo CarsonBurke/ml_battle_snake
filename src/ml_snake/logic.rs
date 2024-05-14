@@ -189,6 +189,8 @@ pub fn choose_move<'a>(_game: &Game, _turn: &i32, board: &Board, me: &Battlesnak
         ("right", outputs[3]),
     ];
 
+    println!("network {:#?}", neural_network);
+
     let mut chosen_move: Option<&str> = None;
     let mut best_score = -1.0;
 

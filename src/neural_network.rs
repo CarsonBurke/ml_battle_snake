@@ -7,12 +7,15 @@ extern crate rand;
 
 pub struct NeuralNetworkManager {
     id_index: i32,
-    pub networks: HashMap<i32, NeuralNetwork>
+    pub networks: HashMap<i32, NeuralNetwork>,
 }
 
 impl NeuralNetworkManager {
     pub fn new() -> Self {
-        return Self { id_index: 0, networks: HashMap::new() };
+        return Self {
+            id_index: 0,
+            networks: HashMap::new(),
+        };
     }
     pub fn new_id(&mut self) -> String {
         self.id_index += 1;
@@ -99,7 +102,6 @@ impl NeuralNetwork {
     //     }
 
     pub fn new(neural_network_manager: &mut NeuralNetworkManager) -> Self {
-
         return NeuralNetwork {
             id: neural_network_manager.new_id(),
             input_weight_layers: vec![],
@@ -131,8 +133,8 @@ impl NeuralNetwork {
             let mut value_i = 0;
             while value_i < input.values.len() {
                 self.weights_by_id
-                    .insert(inputs[input_i].weight_ids[value_i].clone(), BIAS);
-                self.weight_layers[0][input_i].push(BIAS);
+                    .insert(inputs[input_i].weight_ids[value_i].clone(), 0.);
+                self.weight_layers[0][input_i].push(0.);
                 value_i += 1;
             }
 
@@ -152,7 +154,7 @@ impl NeuralNetwork {
 
                 let mut activation_i = 0;
                 while activation_i < self.activation_layers[(layer_i - 1) as usize].len() {
-                    self.weight_layers[layer_i as usize][perceptron_i as usize].push(BIAS);
+                    self.weight_layers[layer_i as usize][perceptron_i as usize].push(0.);
 
                     activation_i += 1;
                 }
@@ -178,7 +180,7 @@ impl NeuralNetwork {
 
             let mut activation_i = 0;
             while activation_i < self.activation_layers[last_layer_index - 1].len() {
-                self.weight_layers[last_layer_index][output_i].push(BIAS);
+                self.weight_layers[last_layer_index][output_i].push(0.);
 
                 activation_i += 1;
             }
@@ -299,7 +301,7 @@ impl NeuralNetwork {
         // Mutate weights
 
         for tuple in self.weights_by_id.clone() {
-            let new_weight = tuple.1 + rng.gen_range((LEARNING_RATE * -1.0)..=LEARNING_RATE);
+            let new_weight = tuple.1 + rng.gen_range((-LEARNING_RATE)..=LEARNING_RATE);
             self.weights_by_id.insert(tuple.0, new_weight);
         }
 
@@ -330,7 +332,7 @@ impl NeuralNetwork {
 
                 while weight_i < self.weight_layers[layer_i][activation_index].len() {
                     self.weight_layers[layer_i][activation_index][weight_i] +=
-                        rng.gen_range((LEARNING_RATE * -1.)..=LEARNING_RATE);
+                        rng.gen_range((-LEARNING_RATE)..=LEARNING_RATE);
                     weight_i += 1;
                 }
 
@@ -352,9 +354,11 @@ impl NeuralNetwork {
     }
 
     pub fn write_weights(&self) {
-        fs::write("weights_by_id.txt", format!("{:?}", self.weights_by_id)).expect("Unable to write weights by id");
+        fs::write("weights_by_id.txt", format!("{:?}", self.weights_by_id))
+            .expect("Unable to write weights by id");
 
-        fs::write("weight_layers.txt", format!("{:?}", self.weight_layers)).expect("Unable to write weight layers");
+        fs::write("weight_layers.txt", format!("{:?}", self.weight_layers))
+            .expect("Unable to write weight layers");
     }
 
     pub fn init_visuals(&mut self) {}

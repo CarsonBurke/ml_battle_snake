@@ -5,17 +5,23 @@ use rand::{prelude::SliceRandom, thread_rng};
 
 use crate::{
     ml_snake::snake,
-    neural_network::{NeuralNetwork, NeuralNetworkManager},
+    neural_network::{self, NeuralNetwork, NeuralNetworkManager},
     simulation::game::GameStepOutcome, utils::build_neural_network,
 };
 
 use super::game::GameWrapper;
 
-pub struct Simulation {}
+pub struct Simulation {
+    longest_length: u32,
+    highest_turns: u32,
+}
 
 impl Simulation {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            longest_length: 0,
+            highest_turns: 0,
+        }
     }
 
     pub async fn run_games(
@@ -114,6 +120,8 @@ impl Simulation {
             for _ in 0..snakes_count {
                 let mut network = NeuralNetwork::new(&mut network_manager);
                 build_neural_network(&mut network, width, height);
+                network.mutate();
+
                 networks.push(network);
             }
         }
@@ -134,7 +142,7 @@ impl Simulation {
             println!("remaining networks count {}", networks.len());
 
             self.reproduce_networks(&mut network_manager, &mut networks, games_count, snakes_count);
-            self.train_networks(&mut networks);
+            self.learn_networks(&mut networks);
         }
     }
 
@@ -166,7 +174,7 @@ impl Simulation {
         networks.shuffle(&mut thread_rng());
     }
 
-    fn train_networks(&self, networks: &mut Vec<NeuralNetwork>) {
+    fn learn_networks(&self, networks: &mut Vec<NeuralNetwork>) {
         for network in networks {
             network.mutate();
         }

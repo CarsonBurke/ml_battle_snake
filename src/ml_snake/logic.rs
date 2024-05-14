@@ -68,7 +68,7 @@ pub struct CoordInfo {
 // move is called on every turn and returns your next move
 // Valid moves are "up", "down", "left", or "right"
 // See https://docs.battlesnake.com/api/example-move for available data
-pub fn get_move<'a>(game: &Game, turn: &i32, board: &Board, me: &Battlesnake) -> &'a str {
+pub fn get_move<'a>(game: &Game, turn: &i32, board: &Board, me: &Battlesnake) -> Option<&'a str> {
     let mut neural_network_manager = NeuralNetworkManager::new();
     let mut neural_network = NeuralNetwork::new(&mut neural_network_manager);
 
@@ -78,7 +78,7 @@ pub fn get_move<'a>(game: &Game, turn: &i32, board: &Board, me: &Battlesnake) ->
     choose_move(game, turn, board, me, &mut neural_network)
 }
 
-pub fn choose_move<'a>(_game: &Game, _turn: &i32, board: &Board, me: &Battlesnake, neural_network: &mut NeuralNetwork) -> &'a str {
+pub fn choose_move<'a>(_game: &Game, _turn: &i32, board: &Board, me: &Battlesnake, neural_network: &mut NeuralNetwork) -> Option<&'a str> {
     #[cfg(feature = "benchmark")]
     let start = SystemTime::now();
 
@@ -137,7 +137,7 @@ pub fn choose_move<'a>(_game: &Game, _turn: &i32, board: &Board, me: &Battlesnak
 
     let mut inputs: Vec<Input> = vec![Input::new(
         "game".to_string(),
-        vec![0., 0., 0., 0.],
+        vec![me.health as f32, 0., me.body.len() as f32, 0.],
         vec![
             "g0".to_string(),
             "g1".to_string(),
@@ -150,8 +150,10 @@ pub fn choose_move<'a>(_game: &Game, _turn: &i32, board: &Board, me: &Battlesnak
         inputs.push(Input::new(
             "coord".to_string(),
             vec![
-                coord_info.x as f32,
-                coord_info.y as f32,
+                /* coord_info.x as f32,
+                coord_info.y as f32, */
+                0.0,
+                0.0,
                 bool_as_f32(coord_info.food),
                 bool_as_f32(coord_info.my_head),
                 bool_as_f32(coord_info.my_body),
@@ -201,7 +203,7 @@ pub fn choose_move<'a>(_game: &Game, _turn: &i32, board: &Board, me: &Battlesnak
     }
 
     let Some(chosen_move) = chosen_move else {
-        return "up"
+        return None// "up"
     };
 
     #[cfg(feature = "snake_logs")]
@@ -266,5 +268,5 @@ pub fn choose_move<'a>(_game: &Game, _turn: &i32, board: &Board, me: &Battlesnak
     #[cfg(feature = "benchmark")]
     info!("took {}ms", duration);
 
-    return chosen_move;
+    return Some(chosen_move);
 }

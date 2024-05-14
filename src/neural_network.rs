@@ -20,7 +20,7 @@ impl NeuralNetworkManager {
     }
 }
 
-const BIAS: f32 = -0.1;
+const BIAS: f32 = 0.1;
 const LEARNING_RATE: f32 = 0.1;
 const HIDDEN_LAYERS_COUNT: i32 = 3;
 const HIDDEN_PERCEPTRON_COUNT: i32 = 5;
@@ -36,7 +36,7 @@ neural_network_manager: NeuralNetworkManager = NeuralNetworkManager {
 };
  */
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Input {
     pub name: String,
     pub values: Vec<f32>,
@@ -63,7 +63,7 @@ impl Output {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct NeuralNetwork {
     pub id: String,
     pub weight_layers: Vec<Vec<Vec<f32>>>,

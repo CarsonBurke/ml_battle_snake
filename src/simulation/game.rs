@@ -171,6 +171,12 @@ impl GameWrapper {
         // Move all snakes and grow if necessary
 
         for (index, chosen_move) in moves {
+
+            let Some(chosen_move) = chosen_move else {
+                self.board.snakes.remove(index);
+                continue;
+            };
+
             let snake = &mut self.board.snakes[index];
 
             let offset = match chosen_move {

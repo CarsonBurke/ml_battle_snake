@@ -37,6 +37,12 @@ fn handle_move(move_req: Json<GameState>) -> Json<Value> {
         &move_req.you,
     );
 
+    println!("Chosen move: {:?}", chosen_move);
+
+    let Some(chosen_move) = chosen_move else {
+        return Json(json!({}));
+    };
+
     let json_move = json!({ "move": chosen_move });
     Json(json_move)
 }
